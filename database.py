@@ -3,7 +3,7 @@ from mysql.connector import Error
 from config import DB_CONFIG
 
 def create_connection():
-    """Connect to MySQL Workbench"""
+    """Connect to MySQL database"""
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         print("✅ Connected to MySQL Workbench!")
@@ -33,7 +33,6 @@ def initialize_database():
             cursor.close()
             conn.close()
 
-# database.py
 def check_email_exists(email):
     """Check if email exists in MySQL database"""
     conn = create_connection()
@@ -50,7 +49,7 @@ def check_email_exists(email):
     return True
 
 def create_user(name, email, password):
-    """Create new user in MySQL Workbench database"""
+    """Create new user in MySQL database"""
     conn = create_connection()
     if conn:
         cursor = conn.cursor()
