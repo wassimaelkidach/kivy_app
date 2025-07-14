@@ -1,4 +1,10 @@
 from kivy.app import App
+from mysql.connector import Error
+import re
+from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import AsyncImage
+from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import ObjectProperty
@@ -37,6 +43,28 @@ def show_error(message):
     
     app.current_popup.open()
 
+def is_valid_email(email):
+    """Check if email has valid format using regex"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def is_valid_password(password):
+    """Check if password meets complexity requirements"""
+    if len(password) < 10:
+        return False, "Password must be at least 10 characters long"
+    
+    if not any(char.isupper() for char in password):
+        return False, "Password must contain at least one uppercase letter"
+    
+    if not any(char.isdigit() for char in password):
+        return False, "Password must contain at least one digit"
+    
+    special_chars = r'!@#$%^&*()_+-=[]{};:"\|,.<>/?'
+    if not any(char in special_chars for char in password):
+        return False, "Password must contain at least one special character"
+    
+    return True, ""
+
 class PopupWindow(Widget):
     def btn(self):
         popFun()
@@ -58,6 +86,10 @@ class LoginWindow(Screen):
         if not all([self.email.text, self.pwd.text]):
             show_error("Email and password are required!")
             return
+
+        if not is_valid_email(self.email.text):
+            show_error("Please enter a valid email adress")
+            return
             
         if validate_login(self.email.text, self.pwd.text):
             self.manager.current = 'logdata'
@@ -75,7 +107,16 @@ class SignupWindow(Screen):
         if not all([self.name2.text, self.email.text, self.pwd.text]):
             show_error("All fields are required!")
             return
+
+        if not is_valid_email(self.email.text):
+            show_error("Please enter a valid email address")
+            return
             
+        is_valid, error_msg = is_valid_password(self.pwd.text)
+        if not is_valid:
+            show_error(error_msg)
+            return
+    
         if check_email_exists(self.email.text):
             show_error("Email already registered!")
             return
@@ -92,7 +133,76 @@ class SignupWindow(Screen):
         self.pwd.text = ""
 
 class LogDataWindow(Screen):
-    pass
+    project_container = ObjectProperty(None)
+    
+    def on_enter(self):
+        self.load_projects()
+    
+    def load_projects(self):
+        """Load projects with centered cards"""
+        self.project_container.clear_widgets()
+        
+        conn = create_connection()
+        if not conn:
+            show_error("Database connection failed")
+            return
+        
+        cursor = None
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT nom_projet, image_path FROM projets")
+            projects = cursor.fetchall()
+
+            # Main container
+            main_layout = BoxLayout(
+                orientation='vertical',
+                size_hint_y=None,
+                height=max(dp(350) * len(projects), self.height),
+                spacing=dp(20),
+                padding=dp(20)            
+            )
+                        
+            for (project_name, image_path) in projects:
+                
+                # Project card
+                card = BoxLayout(
+                    orientation='vertical',
+                    size_hint=(None, None),
+                    size=(dp(300), dp(350)),
+                    spacing=dp(5),
+                    pos_hint={'center_x': 0.5}
+                )
+                
+                img = AsyncImage(
+                    source=image_path if image_path else 'images/default_project.jpg',
+                    size_hint=(1, 0.8),
+                    fit_mode='contain'
+                )
+                
+                name_label = Label(
+                    text=project_name,
+                    size_hint=(1, 0.2),
+                    font_size='16sp',
+                    halign='center'
+                )
+                
+                card.add_widget(img)
+                card.add_widget(name_label)
+                main_layout.add_widget(card)
+            
+            self.project_container.add_widget(main_layout)
+            
+        except Error as e:
+            show_error(f"Database error: {str(e)}")
+        finally:
+            if cursor:
+                try:
+                    cursor.fetchall()
+                except:
+                    pass
+                cursor.close()
+            if conn:
+                conn.close()  
 
 class WindowManager(ScreenManager):
     pass
@@ -106,7 +216,7 @@ sm.add_widget(SignupWindow(name='signup'))
 sm.add_widget(LogDataWindow(name='logdata'))
 
 class LoginApp(App):
-    current_popup = None  # Add this to store popup reference
+    current_popup = None
     
     def dismiss_popup(self):
         """Safely dismiss the current popup"""
@@ -117,6 +227,7 @@ class LoginApp(App):
     def build(self):
         Window.size = (400, 600)
         self.current_popup = None
+        
         sm.current = 'login'
         return sm
 
