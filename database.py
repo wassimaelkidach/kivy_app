@@ -80,7 +80,8 @@ def validate_login(email, password):
                 "SELECT id FROM users WHERE email = %s AND password = %s",
                 (email, password)
             )
-            return cursor.fetchone() is not None
+            result = cursor.fetchone()
+            return result[0] is not None
         except Error as e:
             print(f"Login Validation Error: {e}")
             return False

@@ -1,91 +1,325 @@
 #:kivy 1.11.1
 
 <WindowManager>:
+    canvas.before:
+        
+        Rectangle:
+            source: 'images/gradient_bg.png'
+            pos: self.pos
+            size: self.size
+
     LoginWindow:
     SignupWindow:
     LogDataWindow:
+    ProfileScreen:
 
 <LoginWindow>:
     email: email
     pwd: pwd
+
     FloatLayout:
-        size: root.width, root.height
-        Label:
-            text: "EMAIL:"
-            size_hint: 0.2, 0.1
-            pos_hint: {"x":0.25, "top":0.9}
-        TextInput:
-            id: email
-            multiline: False
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.45, "top":0.9}
-        Label:
-            text: "PASSWORD:"
-            size_hint: 0.2, 0.1
-            pos_hint: {"x":0.25, "top":0.7}
-        TextInput:
-            id: pwd
-            multiline: False
-            password: True
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.45, "top":0.7}
-        Button:
-            text: "Create an account"
-            size_hint: 0.4, 0.1
-            pos_hint: {"x":0.33, "top":0.4}
-            on_release: 
-                app.root.current = 'signup'
-                root.manager.transition.direction = "left"
-        Button:
-            text: "LOGIN"
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.39, "top":0.2}
-            on_release: 
-                root.validate()
-                root.manager.transition.direction = "up"
+
+        # Main card container
+        BoxLayout:
+            orientation: 'vertical'
+            padding: dp(30)
+            spacing: dp(15)
+            size_hint: 0.9, None
+            height: dp(400)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(15)]
+                Color:
+                    rgba: 0.9, 0.6, 0.1, 1 
+                Line:
+                    rounded_rectangle: [self.x, self.y, self.width, self.height, dp(15)]
+                    width: dp(1.5)
+
+            # Header
+            Label:
+                text: '[size=24][b]Welcome Back ![/b][/size]'
+                markup: True
+                color: 0.2, 0.2, 0.2, 1
+                size_hint_y: None
+                height: dp(40)
+                padding_x: dp(10)
+
+            # Email Field
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(70)
+                spacing: dp(5)
+
+                Label:
+                    text: 'Email Address'
+                    size_hint_y: None
+                    height: dp(18)
+                    color: 0.4, 0.4, 0.4, 1
+                    font_size: '13sp'
+                    halign: 'left'
+                    text_size: self.width, None
+                    padding_x: dp(5)
+
+                TextInput:
+                    id: email
+                    multiline: False
+                    size_hint_y: None
+                    height: dp(45)
+                    padding: [dp(10), dp(12), dp(10), dp(12)]
+                    background_color: 0.96, 0.96, 0.96, 1
+                    foreground_color: 0.2, 0.2, 0.2, 1
+                    cursor_color: 0.2, 0.2, 0.2, 1
+                    hint_text: 'your@example.com'
+                    write_tab: False
+
+            # Password Field
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(70)
+                spacing: dp(5)
+
+                Label:
+                    text: 'Password'
+                    size_hint_y: None
+                    height: dp(18)
+                    color: 0.4, 0.4, 0.4, 1
+                    font_size: '13sp'
+                    halign: 'left'
+                    text_size: self.width, None
+                    padding_x: dp(5)
+
+                TextInput:
+                    id: pwd
+                    multiline: False
+                    password: True
+                    size_hint_y: None
+                    height: dp(45)
+                    padding: [dp(10), dp(12), dp(10), dp(12)]
+                    background_color: 0.96, 0.96, 0.96, 1
+                    foreground_color: 0.2, 0.2, 0.2, 1
+                    cursor_color: 0.2, 0.2, 0.2, 1
+                    hint_text: '••••••••'
+                    write_tab: False
+
+            # Login Button
+            Button:
+                text: 'LOGIN'
+                size_hint_y: None
+                height: dp(50)
+                background_normal: ''
+                background_color: 0.9, 0.6, 0.1, 1
+                color: 1, 1, 1, 1
+                bold: True
+                font_size: '16sp'
+                on_release: 
+                    root.validate()
+                    root.manager.transition.direction = "up"
+                canvas.before:
+                    Color:
+                        rgba: (0.9, 0.6, 0.1, 1) if self.state == 'normal' else (0.8, 0.5, 0.1, 1)
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(8)]
+
+            # Secondary actions
+            BoxLayout:
+                size_hint_y: None
+                height: dp(30)
+                spacing: dp(5)
+
+                Button:
+                    text: "Don't have an account? [b]Sign Up[/b]"
+                    markup: True
+                    size_hint_y: None
+                    height: dp(35)
+                    background_color: 0, 0, 0, 0
+                    color: 0.5, 0.5, 0.5, 1
+                    font_size: '13sp' 
+                    on_release: 
+                        app.root.current = 'signup'
+                        root.manager.transition.direction = "left"
 
 <SignupWindow>:
     name2: name2
     email: email
     pwd: pwd
+
     FloatLayout:
-        size: root.width, root.height
-        Label:
-            text: "NAME:"
-            size_hint: 0.2, 0.1
-            pos_hint: {"x":0.25, "top":0.9}
-        TextInput:
-            id: name2
-            multiline: False
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.45, "top":0.9}
-        Label:
-            text: "EMAIL:"
-            size_hint: 0.2, 0.1
-            pos_hint: {"x":0.25, "top":0.7}
-        TextInput:
-            id: email
-            multiline: False
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.45, "top":0.7}
-        Label:
-            text: "PASSWORD:"
-            size_hint: 0.2, 0.1
-            pos_hint: {"x":0.25, "top":0.5}
-        TextInput:
-            id: pwd
-            multiline: False
-            password: True
-            hint_text: "min 10 chars, 1 uppercase, 1 number, 1 special"
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.45, "top":0.5}
-        Button:
-            text: "SUBMIT"
-            size_hint: 0.3, 0.1
-            pos_hint: {"x":0.39, "top":0.28}
-            on_press:
-                root.signupbtn()
-                root.manager.transition.direction = "right"
+        # Main card container
+        BoxLayout:
+            orientation: 'vertical'
+            padding: dp(30)
+            spacing: dp(15)
+            size_hint: 0.9, None
+            height: dp(520)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(15)]
+                Color:
+                    rgba: 0.9, 0.6, 0.1, 1
+                Line:
+                    rounded_rectangle: [self.x, self.y, self.width, self.height, dp(15)]
+                    width: dp(1.5)
+
+            # Header
+            Label:
+                text: '[size=24][b]Create Account[/b][/size]'
+                markup: True
+                color: 0.2, 0.2, 0.2, 1
+                size_hint_y: None
+                height: dp(40)
+                padding_x: dp(10)
+
+            # Name Field
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(65)
+                spacing: dp(4)
+                padding_x: dp(5)
+
+                Label:
+                    text: 'Full Name'
+                    size_hint_y: None
+                    height: dp(18) 
+                    color: 0.4, 0.4, 0.4, 1
+                    font_size: '13sp'  
+                    halign: 'left'
+                    text_size: self.width, None
+                    padding_x: dp(5)
+
+                TextInput:
+                    id: name2
+                    multiline: False
+                    size_hint_y: None
+                    height: dp(42)
+                    padding: [dp(8), dp(10)]
+                    background_color: 0.96, 0.96, 0.96, 1
+                    foreground_color: 0.2, 0.2, 0.2, 1
+                    cursor_color: 0.2, 0.2, 0.2, 1
+                    hint_text: 'John Doe'
+                    write_tab: False
+
+            # Email Field 
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(65)
+                spacing: dp(4)
+                padding_x: dp(5)
+
+                Label:
+                    text: 'Email Address'
+                    size_hint_y: None
+                    height: dp(18)
+                    color: 0.4, 0.4, 0.4, 1
+                    font_size: '13sp'
+                    halign: 'left'
+                    text_size: self.width, None
+                    padding_x: dp(5)
+
+                TextInput:
+                    id: email
+                    multiline: False
+                    size_hint_y: None
+                    height: dp(42)
+                    padding: [dp(8), dp(10)]
+                    background_color: 0.96, 0.96, 0.96, 1
+                    foreground_color: 0.2, 0.2, 0.2, 1
+                    cursor_color: 0.2, 0.2, 0.2, 1
+                    hint_text: 'your@email.com'
+                    write_tab: False
+
+            # Password Field 
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(65)
+                spacing: dp(4)
+                padding_x: dp(5)
+
+                Label:
+                    text: 'Password'
+                    size_hint_y: None
+                    height: dp(18)
+                    color: 0.4, 0.4, 0.4, 1
+                    font_size: '13sp'
+                    halign: 'left'
+                    text_size: self.width, None
+                    padding_x: dp(5)
+
+                TextInput:
+                    id: pwd
+                    multiline: False
+                    password: True
+                    size_hint_y: None
+                    height: dp(42)
+                    padding: [dp(8), dp(10)]
+                    background_color: 0.96, 0.96, 0.96, 1
+                    foreground_color: 0.2, 0.2, 0.2, 1
+                    cursor_color: 0.2, 0.2, 0.2, 1
+                    hint_text: 'min 10 characters'
+                    write_tab: False
+
+            # Password Requirements
+            Label:
+                markup: True
+                text: '[size=11]• 10+ characters  • 1 uppercase  • 1 number  • 1 special[/size]'
+                color: 0.5, 0.5, 0.5, 1
+                size_hint_y: None
+                height: dp(40)
+                halign: 'left'
+                valign: 'top'
+                padding_x: dp(5)
+                text_size: self.width, None
+
+            # Submit Button
+            Button:
+                text: 'SIGN UP'
+                size_hint_y: None
+                height: dp(45)
+                background_normal: ''
+                background_color: 0.9, 0.6, 0.1, 1
+                color: 1, 1, 1, 1
+                bold: True
+                font_size: '15sp'
+                on_press:
+                    root.signupbtn()
+                    root.manager.transition.direction = "right"
+                canvas.before:
+                    Color:
+                        rgba: (0.9, 0.6, 0.1, 1) if self.state == 'normal' else (0.8, 0.5, 0.1, 1)
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(8)]
+
+            # Back to Login
+            Button:
+                text: 'Already have an account? [b]Login[/b]'
+                markup: True
+                size_hint_y: None
+                height: dp(35)
+                background_color: 0, 0, 0, 0
+                color: 0.5, 0.5, 0.5, 1
+                font_size: '13sp' 
+                on_release:
+                    root.manager.current = 'login'
+                    root.manager.transition.direction = 'right'
+                    root.clear_fields()
 
 <P>:
     Label:
@@ -104,22 +338,213 @@
         text: "OK"
         size_hint: 0.5, 0.2
         pos_hint: {"center_x":0.5, "center_y":0.3}
+        height: dp(50)
+        background_normal: ''
+        background_color: 0.9, 0.6, 0.1, 1
+        color: 1, 1, 1, 1
+        bold: True
+        font_size: '16sp'
         on_press: app.dismiss_popup()
 
 <LogDataWindow>:
     project_container: project_container
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(0)
+
+        # Header
         AsyncImage:
             source: 'images/Appbar.png'
             size_hint_y: None
             height: dp(100)
             fit_mode: 'fill'
+
+        # Main content
         ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+
             BoxLayout:
                 id: project_container
                 orientation: 'vertical'
-                size_hint: (1, None)
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(10)
+                spacing: dp(5)
+
+        # Bottom Navigation Bar
+        BoxLayout:
+            size_hint_y: None
+            height: dp(60)
+            padding: [dp(15), dp(5), dp(15), dp(5)]
+            spacing: dp(10)
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 0.9, 0.9, 0.9, 1
+                Line:
+                    width: 1
+                    points: self.x, self.top, self.right, self.top
+
+            # Search Button
+            FloatLayout:
+                size_hint_x: 0.33
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/search.png'
+                    background_down: 'icons/search.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.manager.current = 'logdata'
+
+            # Profile Button
+            FloatLayout:
+                size_hint_x: 0.34
+                Button:
+                    size_hint: None, None
+                    size: dp(30), dp(30)
+                    background_normal: 'icons/user.png'
+                    background_down: 'icons/user.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.manager.current = 'profile'
+
+            # Logout Button
+            FloatLayout:
+                size_hint_x: 0.33
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/logout.png'
+                    background_down: 'icons/logout.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: 
+                        root.logout_action()
+
+<ProfileScreen>:
+    name: 'profile'
+    username_label: username_label
+    email_label: email_label
+    
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(0)
+
+        # Header
+        AsyncImage:
+            source: 'images/Appbar.png'
+            size_hint_y: None
+            height: dp(100)
+            fit_mode: 'fill'
+
+        # Main content
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
                 height: self.minimum_height
                 padding: dp(20)
                 spacing: dp(20)
+
+                # Profile Section
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(200)
+                    spacing: dp(15)
+                    padding: dp(20)
+
+                    Label:
+                        id: username_label
+                        font_size: '20sp'
+                        bold: True
+                        halign: 'center'
+                        size_hint_y: None
+                        height: dp(40)
+
+                    Label:
+                        id: email_label
+                        text: ""
+                        font_size: '16sp'
+                        halign: 'center'
+                        color: 0.4, 0.4, 0.4, 1
+                        size_hint_y: None
+                        height: dp(30)
+
+                # Action Buttons
+
+                Button:
+                    text: 'Edit Profile'
+                    size_hint: 0.5, 0.2
+                    pos_hint: {"center_x":0.5, "center_y":0.3}
+                    height: dp(50)
+                    background_normal: ''
+                    background_color: 0.95, 0.95, 0.95, 1
+                    color: 0.9, 0.6, 0.1, 1
+                    font_size: '16sp'
+                    on_press: root.edit_profile()
+
+
+        # Navigation Bar
+        BoxLayout:
+            size_hint_y: None
+            height: dp(60)
+            padding: [dp(15), dp(5), dp(15), dp(5)]
+            spacing: dp(10)
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 0.9, 0.9, 0.9, 1
+                Line:
+                    width: 1
+                    points: self.x, self.top, self.right, self.top
+
+            # Search Button
+            FloatLayout:
+                size_hint_x: 0.33
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/search.png'
+                    background_down: 'icons/search.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.manager.current = 'logdata'
+
+            # Profile Button (active state)
+            FloatLayout:
+                size_hint_x: 0.34
+                Button:
+                    size_hint: None, None
+                    size: dp(30), dp(30)
+                    background_normal: 'icons/user.png'
+                    background_down: 'icons/user.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.manager.current = 'profile'
+
+            # Logout Button
+            FloatLayout:
+                size_hint_x: 0.33
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/logout.png'
+                    background_down: 'icons/logout.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: 
+                        root.logout_action()
