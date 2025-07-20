@@ -151,6 +151,7 @@
     name2: name2
     email: email
     pwd: pwd
+    phone: phone  # Ajout de la référence au champ téléphone
 
     FloatLayout:
         # Main card container
@@ -159,7 +160,7 @@
             padding: dp(30)
             spacing: dp(15)
             size_hint: 0.9, None
-            height: dp(520)
+            height: dp(580)  # Augmenté pour accommoder le nouveau champ
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
             canvas.before:
                 Color:
@@ -213,7 +214,38 @@
                     hint_text: 'John Doe'
                     write_tab: False
 
-            # Email Field 
+            # Phone Field
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(65)
+                spacing: dp(4)
+                padding_x: dp(5)
+
+                Label:
+                    text: 'Phone Number'
+                    size_hint_y: None
+                    height: dp(18)
+                    color: 0.4, 0.4, 0.4, 1
+                    font_size: '13sp'
+                    halign: 'left'
+                    text_size: self.width, None
+                    padding_x: dp(5)
+
+                TextInput:
+                    id: phone
+                    multiline: False
+                    size_hint_y: None
+                    height: dp(42)
+                    padding: [dp(8), dp(10)]
+                    background_color: 0.96, 0.96, 0.96, 1
+                    foreground_color: 0.2, 0.2, 0.2, 1
+                    cursor_color: 0.2, 0.2, 0.2, 1
+                    hint_text: '0612345678'
+                    write_tab: False
+                    input_type: 'number'  # Pour afficher le clavier numérique sur mobile
+
+            # Email Field
             BoxLayout:
                 orientation: 'vertical'
                 size_hint_y: None
@@ -392,7 +424,7 @@
 
             # Search Button
             FloatLayout:
-                size_hint_x: 0.33
+                size_hint_x: 0.25
                 Button:
                     size_hint: None, None
                     size: dp(25), dp(25)
@@ -404,7 +436,7 @@
 
             # Profile Button
             FloatLayout:
-                size_hint_x: 0.34
+                size_hint_x: 0.25
                 Button:
                     size_hint: None, None
                     size: dp(30), dp(30)
@@ -414,9 +446,21 @@
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                     on_press: root.manager.current = 'profile'
 
+            # Favorite Button
+            FloatLayout:
+                size_hint_x: 0.25
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/favorite.png'
+                    background_down: 'icons/favorite.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: app.root.get_screen('logdata').show_favorites()
+
             # Logout Button
             FloatLayout:
-                size_hint_x: 0.33
+                size_hint_x: 0.25
                 Button:
                     size_hint: None, None
                     size: dp(25), dp(25)
@@ -514,7 +558,7 @@
 
             # Search Button
             FloatLayout:
-                size_hint_x: 0.33
+                size_hint_x: 0.25
                 Button:
                     size_hint: None, None
                     size: dp(25), dp(25)
@@ -526,7 +570,7 @@
 
             # Profile Button (active state)
             FloatLayout:
-                size_hint_x: 0.34
+                size_hint_x: 0.25
                 Button:
                     size_hint: None, None
                     size: dp(30), dp(30)
@@ -536,9 +580,21 @@
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                     on_press: root.manager.current = 'profile'
 
+            # Favorite Button
+            FloatLayout:
+                size_hint_x: 0.25
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/favorite.png'
+                    background_down: 'icons/favorite.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.show_favorites()
+
             # Logout Button
             FloatLayout:
-                size_hint_x: 0.33
+                size_hint_x: 0.25
                 Button:
                     size_hint: None, None
                     size: dp(25), dp(25)
@@ -548,3 +604,51 @@
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                     on_press: 
                         root.logout_action()
+
+<ProjectDetailsWindow>:
+    project_name: project_name
+    project_code: project_code
+    dispos_container: dispos_container
+    
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(20)
+        spacing: dp(15)
+        
+        Label:
+            id: project_name
+            font_size: '24sp'
+            bold: True
+            halign: 'center'
+            size_hint_y: None
+            height: dp(50)
+        
+        Label:
+            id: project_code
+            font_size: '16sp'
+            color: 0.6, 0.6, 0.6, 1
+            halign: 'center'
+            size_hint_y: None
+            height: dp(30)
+        
+        ScrollView:
+            BoxLayout:
+                id: dispos_container
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: dp(5)
+                padding: dp(10)
+        
+        Button:
+            text: 'Return'
+            size_hint: 0.5, 0.2
+            pos_hint: {"center_x":0.5, "center_y":0.3}
+            height: dp(50)
+            background_normal: ''
+            background_color: 0.9, 0.6, 0.1, 1
+            color: 1, 1, 1, 1
+            bold: True
+            font_size: '16sp'
+            size_hint_y: None
+            on_release: root.manager.current = 'logdata'
