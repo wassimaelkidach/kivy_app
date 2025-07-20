@@ -16,6 +16,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.properties import BooleanProperty
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.utils import get_color_from_hex
 from io import BytesIO
 from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
@@ -44,7 +45,7 @@ def show_error(message):
     content.error_label.text = message
     
     # Create and store popup reference
-    app.current_popup = Popup(title="ERROR",
+    app.current_popup = Popup(title="UPDATE !",
                             content=content,
                             size_hint=(0.8, 0.4),
                             separator_color=(0.9, 0.6, 0.1, 1),
@@ -174,17 +175,28 @@ class FavoriButton(Button):
         super().__init__(**kwargs)
         self.bind(is_favori=self.update_text)
         self.update_text()
-    
+        self.stylize_button()
+        self.favori_btn = None
+
+    def stylize_button(self):
+        self.font_size = '14sp'
+        self.bold = True
+        self.color = get_color_from_hex("#ffffff")
+        self.background_normal = ''
+        self.background_down = ''
+        self.border = (16, 16, 16, 16)
+        self.size_hint = (None, None)
+        self.size = (dp(160), dp(45))
+        self.pos_hint = {'center_x': 0.5}
+        self.padding = [dp(10), dp(10)]
+
     def update_text(self, *args):
         if self.is_favori:
             self.text = "Remove Favorite"
-            self.background_color = (0.8, 0, 0, 1)  # Rouge pour retirer
+            self.background_color = get_color_from_hex("#D9534F")
         else:
             self.text = "Add to Favorite"
-            self.background_color = (0, 0.7, 0, 1)  # Vert pour ajouter
-        self.size_hint = (None, None)
-        self.size = (dp(150), dp(40))
-        self.pos_hint = {'center_x': 0.5}
+            self.background_color = get_color_from_hex("#5CB85C")
 
 class LogDataWindow(Screen):
     project_container = ObjectProperty(None)
@@ -294,11 +306,14 @@ def open_project_details(self, project_id, code_projet):
 
 class ProjectDetailsWindow(Screen):
     project_name = ObjectProperty(None)
-    project_code = ObjectProperty(None)  # Nouvelle propriété
+    project_code = ObjectProperty(None)
     dispos_container = ObjectProperty(None)
-    
+    project_id = None
+    favori_btn = None
+
     def load_project_data(self, project_id, code_projet):
-        """Charge les données avec le code_projet comme clé étrangère"""
+        """Charge les données du projet"""
+        self.project_id = project_id
         conn = create_connection()
         if not conn:
             show_error("Database connection failed")
@@ -306,71 +321,190 @@ class ProjectDetailsWindow(Screen):
         
         try:
             cursor = conn.cursor(dictionary=True)
-            
-            # Récupérer les infos de base du projet
-            cursor.execute(
-                "SELECT nom_projet, code_projet FROM projets WHERE id = %s", 
-                (project_id,)
-            )
+            cursor.execute("SELECT nom_projet, code_projet FROM projets WHERE id = %s", (project_id,))
             project = cursor.fetchone()
             
             self.project_name.text = project['nom_projet']
             self.project_code.text = f"Code: {project['code_projet']}"
             
-            # Récupérer les dispos avec la jointure naturelle via code_projet
             cursor.execute("""
-                SELECT 
-                    type_lg, 
-                    CONCAT(superfide_min, 'm²') as surface_min,
-                    CONCAT(superfide_max, 'm²') as surface_max, 
-                    CONCAT(prix, ' MAD') as prix_format,
-                    nombre_disponible
+                SELECT type_lg, 
+                       CONCAT(superfide_min, 'm²') as surface_min,
+                       CONCAT(superfide_max, 'm²') as surface_max, 
+                       CONCAT(prix, ' MAD') as prix_format,
+                       nombre_disponible
                 FROM dispos 
                 WHERE code_projet = %s
                 ORDER BY type_lg
             """, (code_projet,))
             
             self.display_dispos(cursor.fetchall())
+            self.add_favorite_button(project_id)
             
         except Error as e:
             show_error(f"Database error: {str(e)}")
         finally:
             if conn:
                 conn.close()
-    
+
+    def add_favorite_button(self, project_id):
+        """Ajoute le bouton favori"""
+        app = App.get_running_app()
+        user_id = app.current_user_id
+        
+        btn_layout = BoxLayout(size_hint=(1, None), height=dp(50))
+        
+        self.favori_btn = FavoriButton(
+            is_favori=is_favori(user_id, project_id),
+            size_hint=(None, None),
+            size=(dp(200), dp(40)),
+            pos_hint={'center_x': 0.5}
+        )
+        self.favori_btn.bind(on_release=lambda btn: self.toggle_favori(project_id))
+        
+        btn_layout.add_widget(self.favori_btn)
+        self.dispos_container.add_widget(btn_layout)
+
+    def toggle_favori(self, project_id):
+        """Gère l'ajout/suppression des favoris"""
+        app = App.get_running_app()
+        user_id = app.current_user_id
+        
+        if not user_id:
+            show_error("Connectez-vous pour gérer les favoris")
+            return
+        
+        if is_favori(user_id, project_id):
+            if remove_favori(user_id, project_id):
+                show_error("Removed from Favorites")
+            else:
+                show_error("Error while deleting")
+        else:
+            if add_favori(user_id, project_id):
+                show_error("Added to favorites")
+            else:
+                show_error("Error while deleting")
+
+        if self.favori_btn:
+            self.favori_btn.is_favori = is_favori(user_id, project_id)
+
     def display_dispos(self, dispos):
-        """Affiche les disponibilités formatées"""
+        """Affiche les disponibilités"""
         self.dispos_container.clear_widgets()
         
-        # En-tête
-        header = BoxLayout(
-            size_hint=(1, None),
-            height=dp(40),
-            orientation='horizontal'
-        )
+        # Header
+        header = BoxLayout(size_hint=(1, None), height=dp(40))
         header.add_widget(Label(text="Type", bold=True))
         header.add_widget(Label(text="Surface", bold=True))
         header.add_widget(Label(text="Prix", bold=True))
-        header.add_widget(Label(text="Disponible", bold=True))
+        header.add_widget(Label(text="Dispo", bold=True))
         self.dispos_container.add_widget(header)
         
-        # Données
+        # Data rows
         for dispo in dispos:
-            row = BoxLayout(
-                size_hint=(1, None),
-                height=dp(40),
-                orientation='horizontal'
-            )
+            row = BoxLayout(size_hint=(1, None), height=dp(40))
             row.add_widget(Label(text=dispo['type_lg']))
-            row.add_widget(Label(
-                text=f"{dispo['surface_min']}-{dispo['surface_max']}"
-            ))
+            row.add_widget(Label(text=f"{dispo['surface_min']}-{dispo['surface_max']}"))
             row.add_widget(Label(text=dispo['prix_format']))
             row.add_widget(Label(
                 text=str(dispo['nombre_disponible']),
                 color=(0, 0.7, 0, 1) if dispo['nombre_disponible'] > 0 else (0.8, 0, 0, 1)
             ))
             self.dispos_container.add_widget(row)
+
+class FavoritesScreen(Screen):
+    project_container = ObjectProperty(None)
+
+    def on_enter(self):
+        self.load_favorites()
+
+    def open_project_details(self, project_id, code_projet):
+        """Ouvre l'écran des détails du projet"""
+        self.manager.current = 'project_details'
+        details_screen = self.manager.get_screen('project_details')
+        details_screen.load_project_data(project_id, code_projet)
+
+    def load_favorites(self):
+        """Charge uniquement les projets favoris"""
+        self.project_container.clear_widgets()
+        app = App.get_running_app()
+        user_id = app.current_user_id
+        
+        if not user_id:
+            show_error("Connectez-vous pour voir vos favoris")
+            return
+            
+        conn = create_connection()
+        if not conn:
+            show_error("Connexion DB échouée")
+            return
+            
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT p.id, p.code_projet, p.nom_projet, p.images 
+                FROM projets p
+                JOIN favoris f ON p.id = f.projet_id
+                WHERE f.user_id = %s
+            """, (user_id,))
+            
+            projects = cursor.fetchall()
+            
+            if not projects:
+                self.project_container.add_widget(Label(
+                    text="You have no favorite Projects for the moment !",
+                    size_hint=(1, None),
+                    height=dp(50)
+                ))
+                return
+                
+            for (project_id, code_projet, project_name, image) in projects:
+                card = BoxLayout(
+                    orientation='vertical',
+                    size_hint=(None, None),
+                    size=(dp(300), dp(400)),
+                    spacing=dp(5),
+                    pos_hint={'center_x': 0.5}
+                )
+                
+                # Image handling
+                if image:
+                    try:
+                        data = BytesIO(image)
+                        img = Image(
+                            texture=CoreImage(data, ext='jpg').texture,
+                            size_hint=(1, None),
+                            height=dp(320),
+                            fit_mode='contain'
+                        )
+                    except Exception as e:
+                        img = Image(source='images/default.png')
+                else:
+                    img = Image(source='images/default.png')
+                
+                # Project name
+                name_label = ClickableLabel(
+                    text=project_name,
+                    size_hint=(1, None),
+                    height=dp(50),
+                    font_size='16sp',
+                    halign='center',
+                    valign='middle'
+                )
+                name_label.bind(
+                    on_release=lambda instance, pid=project_id, cp=code_projet: 
+                    self.open_project_details(pid, cp)
+                )
+                
+                card.add_widget(img)
+                card.add_widget(name_label)
+                self.project_container.add_widget(card)
+                
+        except Error as e:
+            show_error(f"Erreur DB: {str(e)}")
+        finally:
+            if conn:
+                conn.close()
 
 class ProfileScreen(Screen):
     username_label = ObjectProperty(None)
@@ -418,6 +552,7 @@ sm.add_widget(LoginWindow(name='login'))
 sm.add_widget(SignupWindow(name='signup'))
 sm.add_widget(LogDataWindow(name='logdata'))
 sm.add_widget(ProfileScreen(name='profile'))
+sm.add_widget(FavoritesScreen(name='favorites'))
 sm.add_widget(ProjectDetailsWindow(name='project_details')) 
 
 class LoginApp(App):

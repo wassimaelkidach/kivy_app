@@ -456,7 +456,7 @@
                     background_down: 'icons/favorite.png'
                     border: (0, 0, 0, 0)
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    on_press: app.root.get_screen('logdata').show_favorites()
+                    on_press: root.manager.current = 'favorites'
 
             # Logout Button
             FloatLayout:
@@ -590,7 +590,7 @@
                     background_down: 'icons/favorite.png'
                     border: (0, 0, 0, 0)
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    on_press: root.show_favorites()
+                    on_press: root.manager.current = 'favorites'
 
             # Logout Button
             FloatLayout:
@@ -652,3 +652,107 @@
             font_size: '16sp'
             size_hint_y: None
             on_release: root.manager.current = 'logdata'
+
+<FavoritesScreen>:
+    project_container: project_container
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(0)
+
+        # Header Image
+        AsyncImage:
+            source: 'images/Appbar.png'
+            size_hint_y: None
+            height: dp(100)
+            fit_mode: 'fill'
+            pos_hint: {'top': 1}
+
+        # Title
+        Label:
+            text: '[size=24][b]My Favorites[/b][/size]'
+            markup: True
+            color: 1, 1, 1, 1
+            size_hint_y: None
+            height: dp(40)
+            halign: 'center'
+
+        # Main content card
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+
+            BoxLayout:
+                id: project_container
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: dp(15)
+
+        # Bottom Navigation Bar
+        BoxLayout:
+            size_hint_y: None
+            height: dp(60)
+            padding: [dp(15), dp(5), dp(15), dp(5)]
+            spacing: dp(10)
+            pos_hint: {'bottom': 1}
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 0.9, 0.9, 0.9, 1
+                Line:
+                    width: 1
+                    points: self.x, self.top, self.right, self.top
+
+            # Search Button
+            FloatLayout:
+                size_hint_x: 0.25
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/search.png'
+                    background_down: 'icons/search.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.manager.current = 'logdata'
+
+            # Profile Button
+            FloatLayout:
+                size_hint_x: 0.25
+                Button:
+                    size_hint: None, None
+                    size: dp(30), dp(30)
+                    background_normal: 'icons/user.png'
+                    background_down: 'icons/user.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: root.manager.current = 'profile'
+
+            # Favorite Button
+            FloatLayout:
+                size_hint_x: 0.25
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/favorite.png'
+                    background_down: 'icons/favorite.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+            # Logout Button
+            FloatLayout:
+                size_hint_x: 0.25
+                Button:
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                    background_normal: 'icons/logout.png'
+                    background_down: 'icons/logout.png'
+                    border: (0, 0, 0, 0)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_press: 
+                        root.manager.current = 'login'
+                        root.manager.get_screen('login').reset_form()
