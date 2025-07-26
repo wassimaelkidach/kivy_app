@@ -21,6 +21,24 @@ from kivy.utils import get_color_from_hex
 from kivy.core.window import Window
 from kivy.lang import Builder
 
+class SwipeScreen(Screen):
+    def on_touch_move(self, touch):
+        dx = touch.dx
+        dy = touch.dy
+
+        if abs(dx) > abs(dy):
+            if dx > 50:
+                self.on_swipe_right()
+            elif dx < -50:
+                self.on_swipe_left()
+        return super().on_touch_move(touch)
+
+    def on_swipe_left(self):
+        pass
+
+    def on_swipe_right(self):
+        pass
+
 BASE_URL = "http://localhost:8000"
 
 Window.size = (400, 700)
@@ -158,7 +176,7 @@ def fetch_profile(user_id):
         return None
 
 # -------------------- SCREENS --------------------
-class LoginWindow(Screen):
+class LoginWindow(SwipeScreen):
     email = ObjectProperty(None)
     pwd = ObjectProperty(None)
 
@@ -186,7 +204,11 @@ class LoginWindow(Screen):
         except Exception:
             show_error("Server error")
 
-class SignupWindow(Screen):
+    def reset_form(self):
+        self.email.text = ""
+        self.pwd.text = ""
+
+class SignupWindow(SwipeScreen):
     name2 = ObjectProperty(None)
     email = ObjectProperty(None)
     pwd = ObjectProperty(None)
@@ -245,8 +267,14 @@ class SignupWindow(Screen):
         self.pwd.text = ""
         self.phone.text = ""
 
-class LogDataWindow(Screen):
+class LogDataWindow(SwipeScreen):
     project_container = ObjectProperty(None)
+
+    def on_swipe_left(self):
+        self.manager.current = 'favorites'
+
+    def on_swipe_right(self):
+        self.manager.current = 'profile'
 
     def on_enter(self):
         self.load_projects()
@@ -320,7 +348,7 @@ class LogDataWindow(Screen):
             card.add_widget(label)
             self.project_container.add_widget(card)
 
-class ProjectDetailsWindow(Screen):
+class ProjectDetailsWindow(SwipeScreen):
     project_name = ObjectProperty(None)
     project_code = ObjectProperty(None)
     dispos_container = ObjectProperty(None)
@@ -433,7 +461,7 @@ class ProjectDetailsWindow(Screen):
             ))
             self.dispos_container.add_widget(row)
 
-class FavoritesScreen(Screen):
+class FavoritesScreen(SwipeScreen):
     project_container = ObjectProperty(None)
 
     def on_enter(self):
@@ -549,9 +577,16 @@ class FavoriButton(Button):
             self.text = "Add to Favorite"
             self.background_color = get_color_from_hex("#5CB85C")
 
-class ProfileScreen(Screen):
+class ProfileScreen(SwipeScreen):
     username_label = ObjectProperty(None)
     email_label = ObjectProperty(None)
+
+    def on_swipe_left(self):
+        self.manager.current = 'logdata'
+
+    def on_swipe_right(self):
+        self.manager.current = 'favorites'
+
 
     def edit_profile(self):
         print("✅ Bouton Edit Profile cliqué")
@@ -575,7 +610,7 @@ class ProfileScreen(Screen):
         except:
             show_error("Profile error")
 
-class EditProfileScreen(Screen):
+class EditProfileScreen(SwipeScreen):
     name_input = ObjectProperty(None)
     phone_input = ObjectProperty(None)
     email_input = ObjectProperty(None)

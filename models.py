@@ -13,7 +13,6 @@ class User(Base):
 
     favoris = relationship("Favori", back_populates="user", cascade="all, delete-orphan")
 
-
 class Projet(Base):
     __tablename__ = "projets"
 
@@ -26,7 +25,6 @@ class Projet(Base):
     
     dispos = relationship("Dispo", back_populates="projet")
     favoris = relationship("Favori", back_populates="projet", cascade="all, delete-orphan")
-
 
 class Dispo(Base):
     __tablename__ = "dispos"

@@ -128,6 +128,7 @@ def update_profile(data: ProfileUpdate, db: Session = Depends(get_db)):
 
 #details projets
 class DispoOut(BaseModel):
+    code_projet: str
     type_lg: str
     superfide_min: float
     superfide_max: float
