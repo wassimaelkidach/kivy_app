@@ -1,0 +1,19 @@
+services:
+  buildozer:
+    # Use 'build' to tell Docker Compose to build the image from the Dockerfile
+    # in the current directory if it doesn't exist, or use a local one.
+    # If you still want to ensure it uses *your* locally built image,
+    # you can keep 'image: kivy/buildozer' and just make sure your local one
+    # exists, or use 'build' and it will implicitly tag it.
+    build: .
+    image: kivy/buildozer # This ensures the service uses the image you build/tag as 'kivy/buildozer'
+    container_name: kivy_buildozer_container # Changed name to avoid conflict if you ran it directly before
+    volumes:
+      - .:/app
+      - buildozer_data:/root/.buildozer # Persistent storage for buildozer's internal data
+    working_dir: /app
+    # We don't need 'command' here because the Dockerfile now has ENTRYPOINT ["buildozer"]
+    # which makes the container itself the buildozer command.
+
+volumes:
+  buildozer_data: # Define the named volume
