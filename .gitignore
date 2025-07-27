@@ -1,0 +1,16 @@
+ Buildozer and Android build artifacts
+
+# Buildozer's main data directory (contains SDKs, NDKs, toolchains, etc.)
+.buildozer/
+
+# Where the APKs (and AABs) are generated
+bin/
+
+# Other common temporary or generated files you might want to ignore:
+*.pyc
+__pycache__/
+.venv/
+env/
+*.log
+*.zip
+*.tar.gz
