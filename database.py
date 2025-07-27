@@ -2,11 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-USERNAME = "root"
-PASSWORD = "1234"
-HOST = "localhost"
-DB_NAME = "login_system"
-PORT = 3307 
+import os
+
+USERNAME = os.getenv("MYSQLUSER")
+PASSWORD = os.getenv("MYSQLPASSWORD")
+HOST = os.getenv("MYSQLHOST")
+PORT = os.getenv("MYSQLPORT")
+DB_NAME = os.getenv("MYSQLDATABASE")
 
 DATABASE_URL = f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}?charset=utf8mb4"
 

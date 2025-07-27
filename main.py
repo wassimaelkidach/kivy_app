@@ -39,7 +39,7 @@ class SwipeScreen(Screen):
     def on_swipe_right(self):
         pass
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://192.168.1.3:8000"
 
 Window.size = (400, 700)
 
