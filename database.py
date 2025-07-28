@@ -24,7 +24,7 @@ Base = declarative_base()
 # potential circular imports if models also import from db.py
 # If 'Favori' is defined in models.py, make sure models.py doesn't try
 # to import SessionLocal or engine in a way that causes a circular import.
-from .models import Favori # Assuming models.py is in the same directory
+from models import Favori # Assuming models.py is in the same directory
 
 
 # --- Database Helper Functions ---
