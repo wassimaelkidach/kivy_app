@@ -10,7 +10,7 @@ bin/
 *.pyc
 __pycache__/
 .venv/
-env/
+.env
 *.log
 *.zip
 *.tar.gz
