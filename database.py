@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # Use the combined URL variable if available and preferred
-DATABASE_URL = os.getenv("MYSQL_PUBLIC_URL") 
+# DATABASE_URL = os.getenv("MYSQL_PUBLIC_URL") 
+DATABASE_URL = "mysql://root:vKUZUWxcTiuGmUzjrgHyKdoDMaWxPFFb@metro.proxy.rlwy.net:25998/railway"
 
 # --- DEBUG PRINTS ---
 print(f"DEBUG: Using combined DATABASE_URL={DATABASE_URL}")
