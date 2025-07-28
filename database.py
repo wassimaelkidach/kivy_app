@@ -4,33 +4,15 @@ from sqlalchemy.orm import sessionmaker
 
 import os
 
-USERNAME = os.getenv("MYSQLUSER")
-PASSWORD = os.getenv("MYSQLPASSWORD")
-HOST = os.getenv("MYSQLHOST")
-PORT = os.getenv("MYSQLPORT")
-DB_NAME = os.getenv("MYSQLDATABASE")
+# Use the combined URL variable if available and preferred
+DATABASE_URL = os.getenv("MYSQL_PUBLIC_URL") 
 
 # --- DEBUG PRINTS ---
-print(f"DEBUG: MYSQLUSER={USERNAME}")
-print(f"DEBUG: MYSQLPASSWORD={PASSWORD}")
-print(f"DEBUG: MYSQLHOST={HOST}")
-print(f"DEBUG: MYSQLPORT={PORT}")
-print(f"DEBUG: MYSQLDATABASE={DB_NAME}")
+print(f"DEBUG: Using combined DATABASE_URL={DATABASE_URL}")
 # --- END DEBUG PRINTS ---
 
-
-# --- Construct the DATABASE_URL string ---
-# Added checks to ensure variables are not None before formatting
-if any(v is None for v in [USERNAME, PASSWORD, HOST, PORT, DB_NAME]):
-    print("ERROR: One or more database environment variables are None!")
-    # You might want to raise an exception here or handle it more gracefully
-    # For now, let it proceed to crash at create_engine to see the full traceback if it does.
-    # Optionally, to prevent the "invalid literal for int()" error from malformed URL:
-    DATABASE_URL = "invalid_db_url_due_to_none_vars" # This will cause a different error but prevents the int() conversion error
-else:
-    DATABASE_URL = f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}?charset=utf8mb4"
-
-print(f"DEBUG: Constructed DATABASE_URL={DATABASE_URL}") # Print the constructed URL
+if DATABASE_URL is None:
+    print("ERROR: Combined DATABASE_URL is None! Database connection will fail.")
 
 engine = create_engine(DATABASE_URL, echo=True)
 
