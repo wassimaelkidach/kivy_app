@@ -1,6 +1,7 @@
 import re
 import requests
 import base64
+import os
 from functools import partial
 from io import BytesIO
 from kivy.app import App
@@ -39,7 +40,7 @@ class SwipeScreen(Screen):
     def on_swipe_right(self):
         pass
 
-BASE_URL = "http://192.168.1.3:8000"
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 
 Window.size = (400, 700)
 
