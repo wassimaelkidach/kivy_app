@@ -3,40 +3,19 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session # Import Session here
 import os
 
-# --- Database Credentials from Environment Variables ---
-USERNAME = os.getenv("MYSQLUSER")
-PASSWORD = os.getenv("MYSQLPASSWORD")
-HOST = os.getenv("MYSQLHOST")
-PORT = os.getenv("MYSQLPORT")
-DB_NAME = os.getenv("MYSQLDATABASE")
+# Use the combined URL variable if available and preferred
+# DATABASE_URL = os.getenv("MYSQL_PUBLIC_URL") 
+DATABASE_URL = "mysql+pymysql://root:vKUZUWxcTiuGmUzjrgHyKdoDMaWxPFFb@metro.proxy.rlwy.net:25998/railway"
 
-# --- Define the path to your DigitalOcean CA certificate ---
-# You MUST download this file from your DigitalOcean database cluster
-# and place it in the root of your GitHub repository.
-# Railway will copy it to /app/ when deploying your service.
-SSL_CA_PATH = "/app/do-ca-certificate.crt" # Make sure this file exists in your repo root
+# --- DEBUG PRINTS ---
+print(f"DEBUG: Using combined DATABASE_URL={DATABASE_URL}")
+# --- END DEBUG PRINTS ---
 
-# --- Construct the DATABASE_URL string ---
-# Using f-string for readability and directly embedding variables
-DATABASE_URL = f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}?charset=utf8mb4"
+if DATABASE_URL is None:
+    print("ERROR: Combined DATABASE_URL is None! Database connection will fail.")
 
-# --- Connection arguments for SQLAlchemy, including SSL ---
-# This dictionary will be passed to create_engine
-connect_args = {
-    "ssl": {
-        "ca": SSL_CA_PATH
-        # PyMySQL often handles 'REQUIRED' mode if 'ca' is provided.
-        # If you encounter specific SSL negotiation errors, you might need
-        # to add 'ssl_mode': 'REQUIRED' or 'ssl_verify_cert': True,
-        # but try with just 'ca' first.
-    }
-}
+engine = create_engine(DATABASE_URL, echo=True)
 
-# --- Create the SQLAlchemy engine ---
-# Set echo=False for production to avoid verbose logging
-engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
-
-# --- Create SessionLocal and Base ---
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
