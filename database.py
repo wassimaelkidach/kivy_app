@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy.orm import sessionmaker, Session # Import Session here
 import os
 
 # Use the combined URL variable if available and preferred
@@ -20,8 +19,23 @@ engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
-from sqlalchemy.orm import Session
-from models import Favori
+# --- Import models here (or at the top if no circular dependency) ---
+# It's usually better to import models at the top level to avoid
+# potential circular imports if models also import from db.py
+# If 'Favori' is defined in models.py, make sure models.py doesn't try
+# to import SessionLocal or engine in a way that causes a circular import.
+from .models import Favori # Assuming models.py is in the same directory
+
+
+# --- Database Helper Functions ---
+
+def get_db():
+    """Dependency for FastAPI to get a database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def add_favori(db: Session, user_id: int, projet_id: int) -> bool:
     # Vérifie s'il existe déjà
@@ -32,6 +46,7 @@ def add_favori(db: Session, user_id: int, projet_id: int) -> bool:
     favori = Favori(user_id=user_id, projet_id=projet_id)
     db.add(favori)
     db.commit()
+    db.refresh(favori) # Refresh to get any default values (e.g., auto-incremented ID)
     return True
 
 def remove_favori(db: Session, user_id: int, projet_id: int) -> bool:
