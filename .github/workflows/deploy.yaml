@@ -25,33 +25,32 @@ jobs:
           DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
         run: |
           # Define the path to your project on the Droplet
-          PROJECT_DIR="/var/www/kivy_app" # <--- IMPORTANT: Change this to your actual project path on the Droplet
-          DEPLOY_DIR="${PROJECT_DIR}/deploy"
+          PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app" # <--- This is your project root
+          DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
 
-          # SSH into the Droplet and execute commands
-          # The -o StrictHostKeyChecking=no is for non-interactive first connection
-          # The -T option disables pseudo-terminal allocation, good for non-interactive scripts
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
-            # Navigate to the project directory
-            cd "${PROJECT_DIR}"
+          # Step 1: Navigate to the project root and ensure it's up to date
+          # Create the directory if it doesn't exist (for the very first run)
+          mkdir -p "${PROJECT_ROOT_ON_DROPLET}"
+          cd "${PROJECT_ROOT_ON_DROPLET}" # <--- NOW IN THE ROOT OF YOUR PROJECT ON DROPLET
 
-            # Pull the latest code from GitHub
-            git pull origin ${{ github.ref_name }}
+          # Check if it's already a git repository
+          if [ -d .git ]; then
+            echo "Git repository found. Pulling latest changes..."
+            git pull origin ${{ github.ref_name }} # <--- THIS IS THE PULL COMMAND
+          else
+            echo "No Git repository found. Cloning the repository..."
+            git clone https://github.com/${{ github.repository }}.git .
+            git checkout ${{ github.ref_name }}
+          fi
 
-            # Navigate to the deploy directory
-            cd "${DEPLOY_DIR}"
+          # Step 2: Prepare the deploy directory and .env file
+          # After git pull/clone, the 'deploy' folder and its contents will be present.
+          cd "${DEPLOY_DIR_ON_DROPLET}" # <--- NOW IN THE DEPLOY SUBDIRECTORY
 
-            # Create/Update the .env file with secrets
-            # This ensures your Docker Compose has the necessary database credentials
-            echo "${DOCKER_ENV_VARS_CONTENT}" > .env
+          # Create/Update the .env file in this directory
+          echo "${DOCKER_ENV_VARS_CONTENT}" > .env
+          echo "Created/Updated .env file."
 
-            # Bring up the Docker Compose services
-            # --build: rebuilds images if Dockerfile or context changed
-            # -d: runs in detached mode
-            docker compose up -d --build
-
-            # Optional: Clean up old Docker images to save disk space
-            docker image prune -f
-
-            echo "Deployment complete!"
-          EOF
+          # Step 3: Bring up the Docker Compose services
+          echo "Running docker compose up..."
+          docker compose up -d --build # <--- THIS IS DOCKER COMPOSE, RUN AFTER PULL
