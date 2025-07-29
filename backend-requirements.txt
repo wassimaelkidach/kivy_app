@@ -14,7 +14,7 @@ email_validator==2.2.0
 fastapi==0.115.14
 # fastapi-cli==0.0.8 (Likely not needed for production API)
 # fastapi-cloud-cli==0.1.4 (Likely not needed for production API)
-uvicorn>=0.35.0,<0.36.0 # Or uvicorn==0.35.0 if you prefer exact pinning
+uvicorn[standard]==0.35.0
 filetype==1.2.0
 greenlet==3.2.3
 h11==0.16.0
