@@ -30,7 +30,6 @@ jobs:
 
           # Step 1: Navigate to the project root and ensure it's up to date
           # Create the directory if it doesn't exist (for the very first run)
-          mkdir -p "${PROJECT_ROOT_ON_DROPLET}"
           cd "${PROJECT_ROOT_ON_DROPLET}" # <--- NOW IN THE ROOT OF YOUR PROJECT ON DROPLET
 
           # Check if it's already a git repository
