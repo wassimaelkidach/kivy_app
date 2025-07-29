@@ -12,8 +12,7 @@ docutils==0.21.2
 ecdsa==0.19.1
 email_validator==2.2.0
 fastapi==0.115.14
-# fastapi-cli==0.0.8 (Likely not needed for production API)
-# fastapi-cloud-cli==0.1.4 (Likely not needed for production API)
+# Removed fastapi-cli and fastapi-cloud-cli (not needed for production runtime)
 uvicorn[standard]==0.35.0
 filetype==1.2.0
 greenlet==3.2.3
@@ -26,7 +25,7 @@ itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
 mdurl==0.1.2
-mysql-connector-python==9.3.0
+# REMOVED mysql-connector-python==9.3.0 (Stick to PyMySQL for mysql+pymysql)
 orjson==3.11.0
 passlib==1.7.4
 pillow==10.4.0
@@ -36,12 +35,11 @@ pydantic-extra-types==2.10.5
 pydantic-settings==2.10.1
 pydantic_core==2.33.2
 Pygments==2.19.2
-PyMySQL==1.1.1
-# pypiwin32==223 (Windows-specific, not for Linux server)
+PyMySQL==1.1.1 # Keep this one!
+# Removed pypiwin32 and pywin32 (Windows-specific)
 python-dotenv==1.1.1
 python-jose==3.5.0
 python-multipart==0.0.20
-# pywin32==310 (Windows-specific, not for Linux server)
 PyYAML==6.0.2
 requests==2.32.4
 rich==14.0.0

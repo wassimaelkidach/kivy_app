@@ -1,42 +1,45 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session # Import Session here
+from sqlalchemy.orm import sessionmaker, Session
 import os
 
-# Use the combined URL variable if available and preferred
-# DATABASE_URL = os.getenv("MYSQL_PUBLIC_URL") 
-DATABASE_URL = "mysql+pymysql://root:vKUZUWxcTiuGmUzjrgHyKdoDMaWxPFFb@metro.proxy.rlwy.net:25998/railway"
+# --- IMPORTANT: Get DB URL from Environment Variable ---
+# DigitalOcean App Platform will inject this variable.
+# It might be named DATABASE_URL, or DB_URL, or MYSQL_URL,
+# depending on how you configure your database connection on DO.
+# A common one for DO Managed Databases is DATABASE_URL
+DATABASE_URL = os.getenv("MYSQL_URL_DEFAULT") # Or os.getenv("MYSQL_URL") or similar
 
 # --- DEBUG PRINTS ---
-print(f"DEBUG: Using combined DATABASE_URL={DATABASE_URL}")
+print(f"DEBUG: Constructed DATABASE_URL={DATABASE_URL}")
 # --- END DEBUG PRINTS ---
 
 if DATABASE_URL is None:
-    print("ERROR: Combined DATABASE_URL is None! Database connection will fail.")
+    print("ERROR: DATABASE_URL environment variable is not set!")
+    # For production, you might want to raise an exception to prevent startup:
+    # raise ValueError("DATABASE_URL environment variable is not set!")
+    # Keeping it as a print for now to see the error.
 
-engine = create_engine(DATABASE_URL, echo=True)
+# --- Create the SQLAlchemy engine ---
+# For DigitalOcean Managed MySQL, you generally don't need explicit SSL connect_args.
+# The platform handles the secure connection.
+engine = create_engine(DATABASE_URL, echo=True) # echo=True for debugging, set to False for production
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
-# --- Import models here (or at the top if no circular dependency) ---
-# It's usually better to import models at the top level to avoid
-# potential circular imports if models also import from db.py
-# If 'Favori' is defined in models.py, make sure models.py doesn't try
-# to import SessionLocal or engine in a way that causes a circular import.
-from models import Favori # Assuming models.py is in the same directory
-
+# --- Import models here ---
+from models import User, Projet, Dispo, Favori # Ensure all models used are imported
 
 # --- Database Helper Functions ---
-
 def get_db():
-    """Dependency for FastAPI to get a database session."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
+# ... (Your existing add_favori, remove_favori, is_favori functions) ...
 def add_favori(db: Session, user_id: int, projet_id: int) -> bool:
     # Vérifie s'il existe déjà
     favori_exists = db.query(Favori).filter_by(user_id=user_id, projet_id=projet_id).first()
@@ -46,7 +49,7 @@ def add_favori(db: Session, user_id: int, projet_id: int) -> bool:
     favori = Favori(user_id=user_id, projet_id=projet_id)
     db.add(favori)
     db.commit()
-    db.refresh(favori) # Refresh to get any default values (e.g., auto-incremented ID)
+    db.refresh(favori)
     return True
 
 def remove_favori(db: Session, user_id: int, projet_id: int) -> bool:
