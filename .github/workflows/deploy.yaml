@@ -30,8 +30,12 @@ jobs:
 
           # Step 1: Navigate to the project root and ensure it's up to date
           # Create the directory if it doesn't exist (for the very first run)
-          cd "${PROJECT_ROOT_ON_DROPLET}" # <--- NOW IN THE ROOT OF YOUR PROJECT ON DROPLET
-
+          # cd "${PROJECT_ROOT_ON_DROPLET}" # <--- NOW IN THE ROOT OF YOUR PROJECT ON DROPLET
+          pwd
+          ls 
+          cd /var
+          cd www
+          cd kivy_app
           # Check if it's already a git repository
           if [ -d .git ]; then
             echo "Git repository found. Pulling latest changes..."
