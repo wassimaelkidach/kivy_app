@@ -25,7 +25,7 @@ jobs:
           DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
         run: |
           # Define the path to your project on the Droplet
-          PROJECT_ROOT_ON_DROPLET="/root/kivy_app" # <--- This is your project root
+          PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app" # <--- This is your project root
           DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
 
           # Step 1: Navigate to the project root and ensure it's up to date
