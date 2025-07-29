@@ -22,28 +22,39 @@ jobs:
         env:
           DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
         run: |
+          # Set paths and environment content before SSH
           export PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
           export DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
           export DOCKER_ENV_VARS_CONTENT="${{ secrets.DOCKER_ENV_VARS }}"
+          export DEPLOY_BRANCH="${{ github.ref_name }}"
+          export REPO_URL="https://github.com/${{ github.repository }}.git"
         
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << EOF
-            echo "--- Starting commands on Droplet ---"
+            echo "--- Starting deployment on Droplet ---"
         
             mkdir -p "$PROJECT_ROOT_ON_DROPLET"
-            cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Failed to cd"; exit 1; }
+            cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Failed to cd to \$PROJECT_ROOT_ON_DROPLET"; exit 1; }
         
             if [ -d .git ]; then
-              git pull origin ${{ github.ref_name }}
+              echo "Git repo exists. Pulling changes..."
+              git pull origin $DEPLOY_BRANCH
             else
-              git clone https://github.com/${{ github.repository }}.git .
-              git checkout ${{ github.ref_name }}
+              echo "Cloning repository..."
+              git clone $REPO_URL .
+              git checkout $DEPLOY_BRANCH
             fi
         
-            cd "$DEPLOY_DIR_ON_DROPLET" || { echo "Failed to cd to deploy"; exit 1; }
+            echo "Writing .env to project root"
+            echo "$DOCKER_ENV_VARS_CONTENT" > "$PROJECT_ROOT_ON_DROPLET/.env"
         
-            echo "$DOCKER_ENV_VARS_CONTENT" > .env
+            echo "Navigating to deploy folder: $DEPLOY_DIR_ON_DROPLET"
+            cd "$DEPLOY_DIR_ON_DROPLET" || { echo "Failed to cd to \$DEPLOY_DIR_ON_DROPLET"; exit 1; }
+        
+            echo "Bringing up Docker Compose services..."
             docker compose up -d --build
+        
+            echo "Cleaning up unused images..."
             docker image prune -f
         
-            echo "--- Deployment complete ---"
+            echo "--- Deployment completed successfully ---"
           EOF
