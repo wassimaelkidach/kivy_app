@@ -1,0 +1,57 @@
+name: Deploy FastAPI to DigitalOcean Droplet
+
+on:
+  push:
+    branches:
+      - login # <--- Change to your deployment branch (e.g., main, master, login)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # GitHub-hosted runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action to check out your repository code
+
+      - name: Set up SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0 # Action to set up SSH agent with your private key
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }} # Use the private key secret
+
+      - name: Deploy to Droplet via SSH
+        env:
+          # Expose the DOCKER_ENV_VARS secret as an environment variable for the script
+          # This is how the script will access the content of your .env file
+          DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
+        run: |
+          # Define the path to your project on the Droplet
+          PROJECT_DIR="/var/www/kivy_app" # <--- IMPORTANT: Change this to your actual project path on the Droplet
+          DEPLOY_DIR="${PROJECT_DIR}/deploy"
+
+          # SSH into the Droplet and execute commands
+          # The -o StrictHostKeyChecking=no is for non-interactive first connection
+          # The -T option disables pseudo-terminal allocation, good for non-interactive scripts
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
+            # Navigate to the project directory
+            cd "${PROJECT_DIR}"
+
+            # Pull the latest code from GitHub
+            git pull origin ${{ github.ref_name }}
+
+            # Navigate to the deploy directory
+            cd "${DEPLOY_DIR}"
+
+            # Create/Update the .env file with secrets
+            # This ensures your Docker Compose has the necessary database credentials
+            echo "${DOCKER_ENV_VARS_CONTENT}" > .env
+
+            # Bring up the Docker Compose services
+            # --build: rebuilds images if Dockerfile or context changed
+            # -d: runs in detached mode
+            docker compose up -d --build
+
+            # Optional: Clean up old Docker images to save disk space
+            docker image prune -f
+
+            echo "Deployment complete!"
+          EOF

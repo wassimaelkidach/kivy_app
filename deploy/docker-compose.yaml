@@ -1,0 +1,39 @@
+# deploy/docker-compose.yaml
+version: '3.8'
+
+services:
+  # FastAPI Application Service
+  web:
+    # Build context: Tells Docker where the Dockerfile and source code are located.
+    # '.' means the current directory (deploy/). '..' means the parent directory (your_project_root/).
+    build:
+      context: .. # <--- IMPORTANT: Changed to '..' because app code is in parent dir
+      dockerfile: ./deploy/Dockerfile # <--- IMPORTANT: Specify the path to your Dockerfile from the context
+    ports:
+      - "8000:8000"
+    environment:
+      # These variables are still loaded from the .env file in the same directory as docker-compose.yaml (deploy/.env)
+      DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}?charset=utf8mb4"
+    depends_on:
+      - db
+    volumes:
+      # Mount your application code from the root of the project into the container's /app
+      - ../:/app # <--- IMPORTANT: Changed to '../' for the host path
+    restart: always
+
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306" # Optional, for host access
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  db_data:
