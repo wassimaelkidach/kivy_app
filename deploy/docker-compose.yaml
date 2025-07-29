@@ -1,39 +1,59 @@
-# deploy/docker-compose.yaml
-version: '3.8'
+name: Deploy FastAPI to DigitalOcean Droplet
 
-services:
-  # FastAPI Application Service
-  web:
-    # Build context: Tells Docker where the Dockerfile and source code are located.
-    # '.' means the current directory (deploy/). '..' means the parent directory (your_project_root/).
-    build:
-      context: .. # <--- IMPORTANT: Changed to '..' because app code is in parent dir
-      dockerfile: ./deploy/Dockerfile # <--- IMPORTANT: Specify the path to your Dockerfile from the context
-    ports:
-      - "8000:8000"
-    environment:
-      # These variables are still loaded from the .env file in the same directory as docker-compose.yaml (deploy/.env)
-      DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}?charset=utf8mb4"
-    depends_on:
-      - db
-    volumes:
-      # Mount your application code from the root of the project into the container's /app
-      - ../:/app # <--- IMPORTANT: Changed to '../' for the host path
-    restart: always
+on:
+  push:
+    branches:
+      - login # <--- Your deployment branch
 
-  # MySQL Database Service
-  db:
-    image: mysql:8.0
-    ports:
-      - "3306:3306" # Optional, for host access
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-    restart: always
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-volumes:
-  db_data:
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to Droplet via SSH
+        env:
+          DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
+        run: |
+          # Define the path to your project on the Droplet
+          PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app" # <--- CONFIRM THIS IS THE ABSOLUTE PATH
+          DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
+
+          # --- Step 1: Navigate to the project root and ensure it's up to date ---
+          # Create the directory if it doesn't exist (for the very first run)
+          mkdir -p "${PROJECT_ROOT_ON_DROPLET}"
+          cd "${PROJECT_ROOT_ON_DROPLET}"
+
+          # Check if it's already a git repository
+          if [ -d .git ]; then
+            echo "Git repository found. Pulling latest changes..."
+            git pull origin ${{ github.ref_name }} # Pull from the branch that triggered the action
+          else
+            echo "No Git repository found. Cloning the repository..."
+            git clone https://github.com/${{ github.repository }}.git . # Clone into the current directory
+            git checkout ${{ github.ref_name }} # Checkout the correct branch
+          fi
+
+          # --- Step 2: Prepare the deploy directory and .env file ---
+          cd "${DEPLOY_DIR_ON_DROPLET}" # Navigate to the directory containing docker-compose.yaml
+
+          # Create/Update the .env file with secrets for Docker Compose
+          echo "${DOCKER_ENV_VARS_CONTENT}" > .env
+          echo "Created/Updated .env file."
+
+
+          # --- Step 3: Bring up the Docker Compose services ---
+          echo "Running docker compose up..."
+          docker compose up -d --build
+
+          # Optional: Clean up old Docker images to save disk space
+          # docker image prune -f
+
+          echo "Deployment complete!"
