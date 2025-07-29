@@ -22,47 +22,28 @@ jobs:
         env:
           DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
         run: |
-          # Define the path to your project on the Droplet
-          PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app" # <--- CONFIRM THIS IS THE ABSOLUTE PATH
-          DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
-
-          # --- EVERYTHING BELOW THIS LINE (until EOF) WILL RUN ON YOUR DROPLET VIA SSH ---
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
+          export PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
+          export DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
+          export DOCKER_ENV_VARS_CONTENT="${{ secrets.DOCKER_ENV_VARS }}"
+        
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << EOF
             echo "--- Starting commands on Droplet ---"
-            echo "Current directory on Droplet: $(pwd)" # Debug print on Droplet
-
-            # Step 1: Navigate to the project root and ensure it's up to date
-            mkdir -p "${PROJECT_ROOT_ON_DROPLET}" # Ensures the directory exists
-            cd "${PROJECT_ROOT_ON_DROPLET}" || { echo "ERROR: Failed to cd to ${PROJECT_ROOT_ON_DROPLET}!"; exit 1; }
-            echo "Navigated to: $(pwd)" # Debug print on Droplet
-
-            # Check if it's already a git repository
+        
+            mkdir -p "$PROJECT_ROOT_ON_DROPLET"
+            cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Failed to cd"; exit 1; }
+        
             if [ -d .git ]; then
-              echo "Git repository found. Pulling latest changes..."
-              git pull origin ${{ github.ref_name }} # Pull from the branch that triggered the action
+              git pull origin ${{ github.ref_name }}
             else
-              echo "No Git repository found. Cloning the repository..."
-              git clone https://github.com/${{ github.repository }}.git . # Clone into the current directory
-              git checkout ${{ github.ref_name }} # Checkout the correct branch
+              git clone https://github.com/${{ github.repository }}.git .
+              git checkout ${{ github.ref_name }}
             fi
-            echo "Git operations complete."
-
-            # Step 2: Prepare the deploy directory and .env file
-            # After git pull/clone, the 'deploy' folder and its contents will be present.
-            echo "Navigating to deploy directory: ${DEPLOY_DIR_ON_DROPLET}"
-            cd "${DEPLOY_DIR_ON_DROPLET}" || { echo "ERROR: Failed to cd to ${DEPLOY_DIR_ON_DROPLET}!"; exit 1; }
-            echo "Navigated to: $(pwd)" # Debug print on Droplet
-
-            # Create/Update the .env file in this directory
-            echo "${DOCKER_ENV_VARS_CONTENT}" > .env
-            echo "Created/Updated .env file."
-
-            # Step 3: Bring up the Docker Compose services
-            echo "Running docker compose up..."
+        
+            cd "$DEPLOY_DIR_ON_DROPLET" || { echo "Failed to cd to deploy"; exit 1; }
+        
+            echo "$DOCKER_ENV_VARS_CONTENT" > .env
             docker compose up -d --build
-
             docker image prune -f
-
-            echo "Deployment complete!"
-            echo "--- End commands on Droplet ---"
+        
+            echo "--- Deployment complete ---"
           EOF
