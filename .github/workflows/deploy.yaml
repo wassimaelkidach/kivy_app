@@ -35,8 +35,8 @@ jobs:
             DOCKER_COMPOSE_FILE="\$PROJECT_ROOT_ON_DROPLET/docker/docker-compose.fast.yaml"
 
             cd "\$PROJECT_ROOT_ON_DROPLET" || exit 1
-            ls -la 
-            ls -l .git
+            ls -la "\$PROJECT_ROOT_ON_DROPLET"
+            ls -l .git "\$PROJECT_ROOT_ON_DROPLET"
 
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
