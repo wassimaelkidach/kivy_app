@@ -31,12 +31,14 @@ jobs:
             echo "--- Starting deployment on Droplet ---"
 
             cd "\$PROJECT_ROOT_ON_DROPLET" || exit 1
+            pwd
+            ls -la
 
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
               git pull origin $DEPLOY_BRANCH
             else
-              echo "Cloning repository..."
+              echo "Cloning repository..." 
               git clone $REPO_URL .
               git checkout $DEPLOY_BRANCH
             fi
