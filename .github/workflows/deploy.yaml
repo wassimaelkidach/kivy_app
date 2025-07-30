@@ -29,6 +29,8 @@ jobs:
         
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
             echo "--- Starting deployment on Droplet ---"
+            echo "Current directory: $(pwd)"
+            ls -la /var/www
 
             PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
             BACK_DIR="\$PROJECT_ROOT_ON_DROPLET/back"
