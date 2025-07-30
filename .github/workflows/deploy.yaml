@@ -30,7 +30,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
             echo "--- Starting deployment on Droplet ---"
 
-            cd "\$PROJECT_ROOT_ON_DROPLET" || exit 1
+            cd "$PROJECT_ROOT_ON_DROPLET" || exit 1
             pwd
             ls -la
 
