@@ -4,9 +4,9 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import base64
-from database import SessionLocal
-from models import User, Projet, Dispo, Favori
-from database import add_favori, remove_favori, is_favori
+from back.database import SessionLocal
+from back.models import User, Projet, Dispo, Favori
+from back.database import add_favori, remove_favori, is_favori
 
 app = FastAPI()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

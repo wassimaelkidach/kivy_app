@@ -3,7 +3,7 @@ name: Deploy FastAPI to DigitalOcean Droplet
 on:
   push:
     branches:
-      - login # <--- Your deployment branch
+      - login
 
 jobs:
   deploy:
@@ -22,19 +22,21 @@ jobs:
         env:
           DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
         run: |
-          # Set paths and environment content before SSH
           export PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
-          export DEPLOY_DIR_ON_DROPLET="${PROJECT_ROOT_ON_DROPLET}/deploy"
           export DOCKER_ENV_VARS_CONTENT="${{ secrets.DOCKER_ENV_VARS }}"
           export DEPLOY_BRANCH="${{ github.ref_name }}"
           export REPO_URL="https://github.com/${{ github.repository }}.git"
         
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << EOF
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
             echo "--- Starting deployment on Droplet ---"
-        
-            mkdir -p "$PROJECT_ROOT_ON_DROPLET"
-            cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Failed to cd to \$PROJECT_ROOT_ON_DROPLET"; exit 1; }
-        
+
+            PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
+            BACK_DIR="\$PROJECT_ROOT_ON_DROPLET/back"
+            DOCKER_COMPOSE_FILE="\$PROJECT_ROOT_ON_DROPLET/docker/docker-compose.fast.yaml"
+
+            mkdir -p "\$PROJECT_ROOT_ON_DROPLET"
+            cd "\$PROJECT_ROOT_ON_DROPLET" || exit 1
+
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
               git pull origin $DEPLOY_BRANCH
@@ -43,18 +45,15 @@ jobs:
               git clone $REPO_URL .
               git checkout $DEPLOY_BRANCH
             fi
-        
-            echo "Writing .env to project root"
-            echo "$DOCKER_ENV_VARS_CONTENT" > "$PROJECT_ROOT_ON_DROPLET/.env"
-        
-            echo "Navigating to deploy folder: $DEPLOY_DIR_ON_DROPLET"
-            cd "$DEPLOY_DIR_ON_DROPLET" || { echo "Failed to cd to \$DEPLOY_DIR_ON_DROPLET"; exit 1; }
-        
-            echo "Bringing up Docker Compose services..."
-            docker compose up -d --build
-        
+
+            echo "Writing .env to back/ folder"
+            echo "$DOCKER_ENV_VARS_CONTENT" > "\$BACK_DIR/.env"
+
+            echo "Bringing up Docker Compose services using: \$DOCKER_COMPOSE_FILE"
+            docker compose -f "\$DOCKER_COMPOSE_FILE" up -d --build
+
             echo "Cleaning up unused images..."
             docker image prune -f
-        
+
             echo "--- Deployment completed successfully ---"
           EOF

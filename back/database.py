@@ -29,7 +29,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 # --- Import models here ---
-from models import User, Projet, Dispo, Favori # Ensure all models used are imported
+from back.models import User, Projet, Dispo, Favori # Ensure all models used are imported
 
 # --- Database Helper Functions ---
 def get_db():

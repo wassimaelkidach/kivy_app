@@ -4,17 +4,17 @@ services:
   web:
     build:
       context: ..                      # Root of the project
-      dockerfile: deploy/Dockerfile   # Path to Dockerfile from the context
+      dockerfile: ../back/Dockerfile   # Dockerfile path
     ports:
       - "8000:8000"
     env_file:
-      - ../.env                        # Load env vars from the root .env file
+      - ../back/.env                   # Updated path to .env
     environment:
       DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}?charset=utf8mb4"
     depends_on:
       - db
     volumes:
-      - ../:/app                       # Mount the whole app directory
+      - ../:/app                       # Mount the whole app
     restart: always
 
   db:
@@ -22,7 +22,7 @@ services:
     ports:
       - "3306:3306"
     env_file:
-      - ../.env                        # Use the same .env for DB credentials
+      - ../back/.env                   # Updated path to .env
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
