@@ -20,37 +20,60 @@ jobs:
 
       - name: Deploy to Droplet via SSH
         env:
+          # DOCKER_ENV_VARS_CONTENT is used here to pass the secret content
           DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
         run: |
+          # Define and export variables for the local shell environment
           export PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
-          export DOCKER_ENV_VARS_CONTENT="${{ secrets.DOCKER_ENV_VARS }}"
           export DEPLOY_BRANCH="${{ github.ref_name }}"
           export REPO_URL="https://github.com/${{ github.repository }}.git"
-
           export DOCKER_COMPOSE_FILE="docker/docker-compose.fast.yaml"
-        
+
+          # --- NEW: Parse DOCKER_ENV_VARS_CONTENT and export individual variables ---
+          # This loop reads each line from the DOCKER_ENV_VARS_CONTENT string.
+          # It then exports each line as an environment variable.
+          # This ensures that variables like MYSQL_USER, MYSQL_PASSWORD, etc.,
+          # are available in the shell environment when 'docker compose' runs.
+          echo "Parsing and exporting Docker environment variables..."
+          echo "$DOCKER_ENV_VARS_CONTENT" | while IFS= read -r line; do
+            # Skip empty lines and lines that start with '#' (comments)
+            if [[ -n "$line" && ! "$line" =~ ^# ]]; then
+              export "$line"
+              echo "  Exported: $(echo "$line" | cut -d'=' -f1)=***" # Mask value for logs
+            fi
+          done
+          echo "Finished exporting Docker environment variables."
+
+          # --- CRITICAL CHANGE: Removed single quotes from 'EOF' ---
+          # By removing the single quotes from 'EOF', the shell running this
+          # 'run' block will perform variable expansion on all exported variables
+          # *before* sending the script content to the remote droplet via SSH.
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << EOF
             echo "--- Starting deployment on Droplet ---"
 
+            # Use the variables directly as they are now expanded by the local shell
             cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Error: Directory $PROJECT_ROOT_ON_DROPLET not found on droplet."; exit 1; }
 
             if [ -d .git ]; then
-              echo "Git repo exists. Pulling changes..."
-              git pull origin $DEPLOY_BRANCH
+              echo "Git repo exists. Pulling changes for branch: $DEPLOY_BRANCH"
+              git pull origin "$DEPLOY_BRANCH"
             else
-              echo "Cloning repository..." 
-              git clone $REPO_URL .
-              git checkout $DEPLOY_BRANCH
+              echo "Cloning repository: $REPO_URL into current directory."
+              git clone "$REPO_URL" .
+              git checkout "$DEPLOY_BRANCH"
             fi
 
-            echo "Writing .env to back/ folder"
-            echo "$DOCKER_ENV_VARS_CONTENT" > back/.env
-            
-            echo "Displaying .env content: "
-            cat back/.env
+            # --- Removed explicit .env file writing here ---
+            # The variables are now passed directly to docker compose via the environment.
+            # If you still need a .env file for other purposes (e.g., local development),
+            # you can keep the 'echo "$DOCKER_ENV_VARS_CONTENT" > back/.env' line,
+            # but it won't be strictly necessary for Docker Compose to pick up the variables.
+            echo "Environment variables are being passed directly to Docker Compose."
 
             echo "Bringing up Docker Compose services using: $DOCKER_COMPOSE_FILE"
-            docker compose -f docker/docker-compose.fast.yaml up -d --build
+            # Docker Compose will now pick up MYSQL_USER, MYSQL_PASSWORD, etc.,
+            # from the shell environment where this command is executed.
+            docker compose -f "$DOCKER_COMPOSE_FILE" up -d --build
 
             echo "Cleaning up unused images..."
             docker image prune -f
