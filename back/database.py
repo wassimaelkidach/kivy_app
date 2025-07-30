@@ -12,7 +12,7 @@ MYSQL_USER = os.getenv("MYSQL_USER") # Or os.getenv("MYSQL_URL") or similar
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD") # Or os.getenv("MYSQL_URL") or similar
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE") # Or os.getenv("MYSQL_URL") or similar
 
-DATABASE_URL = f"mysql://{MYSQL_USER}:{MYSQL_PASSWORD}@db:3306/{MYSQL_DATABASE}?charset=utf8mb4"
+DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@db:3306/{MYSQL_DATABASE}?charset=utf8mb4"
 
 # --- DEBUG PRINTS ---
 print(f"DEBUG: Constructed DATABASE_URL={DATABASE_URL}")
