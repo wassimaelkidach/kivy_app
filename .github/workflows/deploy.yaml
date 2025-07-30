@@ -29,13 +29,13 @@ jobs:
           export REPO_URL="https://github.com/${{ github.repository }}.git"
           export DOCKER_COMPOSE_FILE="docker/docker-compose.fast.yaml"
 
-          # --- NEW: Base64 encode DOCKER_ENV_VARS_CONTENT to safely pass it ---
+          # Base64 encode DOCKER_ENV_VARS_CONTENT to safely pass it
           # This prevents any issues with special characters or newlines in the secret
           # breaking the SSH here-document syntax.
           export ENCODED_DOCKER_ENV_VARS=$(echo -n "$DOCKER_ENV_VARS_CONTENT" | base64 -w 0)
           echo "Environment variables base64 encoded for safe transfer."
 
-          # --- CRITICAL CHANGE: Removed single quotes from 'EOF' ---
+          # CRITICAL CHANGE: Removed single quotes from 'EOF'
           # By removing the single quotes from 'EOF', the shell running this
           # 'run' block will perform variable expansion on all exported variables
           # *before* sending the script content to the remote droplet via SSH.
@@ -63,10 +63,10 @@ jobs:
             echo "Displaying .env content (first few lines): "
             head -n 5 back/.env # Display only first 5 lines for security/verbosity
 
-            echo "Bringing up Docker Compose services using: $DOCKER_COMPOSE_FILE"
-            # Docker Compose will now pick up MYSQL_USER, MYSQL_PASSWORD, etc.,
-            # from the .env file that was just created.
-            docker compose -f "$DOCKER_COMPOSE_FILE" up -d --build
+            echo "Bringing up Docker Compose services using: $DOCKER_COMPOSE_FILE with --env-file"
+            # --- CRITICAL CHANGE: Added --env-file flag ---
+            # Docker Compose will now explicitly load environment variables from back/.env
+            docker compose -f "$DOCKER_COMPOSE_FILE" --env-file back/.env up -d --build
 
             echo "Cleaning up unused images..."
             docker image prune -f
