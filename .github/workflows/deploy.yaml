@@ -26,13 +26,13 @@ jobs:
           export DOCKER_ENV_VARS_CONTENT="${{ secrets.DOCKER_ENV_VARS }}"
           export DEPLOY_BRANCH="${{ github.ref_name }}"
           export REPO_URL="https://github.com/${{ github.repository }}.git"
+
+          export DOCKER_COMPOSE_FILE="docker/docker-compose.fast.yaml"
         
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
             echo "--- Starting deployment on Droplet ---"
 
             cd /var/www/kivy_app || exit 1
-            pwd
-            ls -la
 
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
@@ -44,10 +44,13 @@ jobs:
             fi
 
             echo "Writing .env to back/ folder"
-            echo "$DOCKER_ENV_VARS_CONTENT" > "\$BACK_DIR/.env"
+            echo "$DOCKER_ENV_VARS_CONTENT" > back/.env
+            
+            echo "Displaying .env content: "
+            cat back/.env
 
-            echo "Bringing up Docker Compose services using: \$DOCKER_COMPOSE_FILE"
-            docker compose -f "\$DOCKER_COMPOSE_FILE" up -d --build
+            echo "Bringing up Docker Compose services using: $DOCKER_COMPOSE_FILE"
+            docker compose -f docker/docker-compose.fast.yaml up -d --build
 
             echo "Cleaning up unused images..."
             docker image prune -f
