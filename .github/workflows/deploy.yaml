@@ -34,9 +34,10 @@ jobs:
             BACK_DIR="\$PROJECT_ROOT_ON_DROPLET/back"
             DOCKER_COMPOSE_FILE="\$PROJECT_ROOT_ON_DROPLET/docker/docker-compose.fast.yaml"
 
-            cd "\$PROJECT_ROOT_ON_DROPLET" || exit 1
-            ls -la "\$PROJECT_ROOT_ON_DROPLET"
-            ls -l .git "\$PROJECT_ROOT_ON_DROPLET"
+            cd var/www/kivy_app || exit 1
+            pwd 
+            ls -la 
+            ls -l .git
 
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
