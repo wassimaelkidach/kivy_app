@@ -5,8 +5,6 @@ services:
       dockerfile: back/Dockerfile   # Dockerfile path
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}?charset=utf8mb4"
     depends_on:
       - db
     volumes:
