@@ -29,20 +29,11 @@ jobs:
           export REPO_URL="https://github.com/${{ github.repository }}.git"
           export DOCKER_COMPOSE_FILE="docker/docker-compose.fast.yaml"
 
-          # --- NEW: Parse DOCKER_ENV_VARS_CONTENT and export individual variables ---
-          # This loop reads each line from the DOCKER_ENV_VARS_CONTENT string.
-          # It then exports each line as an environment variable.
-          # This ensures that variables like MYSQL_USER, MYSQL_PASSWORD, etc.,
-          # are available in the shell environment when 'docker compose' runs.
-          echo "Parsing and exporting Docker environment variables..."
-          echo "$DOCKER_ENV_VARS_CONTENT" | while IFS= read -r line; do
-            # Skip empty lines and lines that start with '#' (comments)
-            if [[ -n "$line" && ! "$line" =~ ^# ]]; then
-              export "$line"
-              echo "  Exported: $(echo "$line" | cut -d'=' -f1)=***" # Mask value for logs
-            fi
-          done
-          echo "Finished exporting Docker environment variables."
+          # --- NEW: Base64 encode DOCKER_ENV_VARS_CONTENT to safely pass it ---
+          # This prevents any issues with special characters or newlines in the secret
+          # breaking the SSH here-document syntax.
+          export ENCODED_DOCKER_ENV_VARS=$(echo -n "$DOCKER_ENV_VARS_CONTENT" | base64 -w 0)
+          echo "Environment variables base64 encoded for safe transfer."
 
           # --- CRITICAL CHANGE: Removed single quotes from 'EOF' ---
           # By removing the single quotes from 'EOF', the shell running this
@@ -63,16 +54,18 @@ jobs:
               git checkout "$DEPLOY_BRANCH"
             fi
 
-            # --- Removed explicit .env file writing here ---
-            # The variables are now passed directly to docker compose via the environment.
-            # If you still need a .env file for other purposes (e.g., local development),
-            # you can keep the 'echo "$DOCKER_ENV_VARS_CONTENT" > back/.env' line,
-            # but it won't be strictly necessary for Docker Compose to pick up the variables.
-            echo "Environment variables are being passed directly to Docker Compose."
+            echo "Writing .env to back/ folder by decoding base64 content..."
+            # Create the 'back' directory if it doesn't exist
+            mkdir -p back/
+            # Decode the base64 string and write it to the .env file
+            echo "$ENCODED_DOCKER_ENV_VARS" | base64 -d > back/.env
+
+            echo "Displaying .env content (first few lines): "
+            head -n 5 back/.env # Display only first 5 lines for security/verbosity
 
             echo "Bringing up Docker Compose services using: $DOCKER_COMPOSE_FILE"
             # Docker Compose will now pick up MYSQL_USER, MYSQL_PASSWORD, etc.,
-            # from the shell environment where this command is executed.
+            # from the .env file that was just created.
             docker compose -f "$DOCKER_COMPOSE_FILE" up -d --build
 
             echo "Cleaning up unused images..."
