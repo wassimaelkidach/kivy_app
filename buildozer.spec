@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = My Application
+title = Addoha
 
 # (str) Package name
-package.name = myapp
+package.name = addohaapp
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = org.app
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -47,7 +47,7 @@ requirements = python3,kivy
 #presplash.filename = %(source.dir)s/data/presplash.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/data/icon.png
+icon.filename = icons/icon.png
 
 # (list) Supported orientations
 # Valid options are: landscape, portrait, portrait-reverse or landscape-reverse
