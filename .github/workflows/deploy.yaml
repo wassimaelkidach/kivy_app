@@ -1,0 +1,75 @@
+name: Deploy FastAPI to DigitalOcean Droplet
+
+on:
+  push:
+    branches:
+      - login
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to Droplet via SSH
+        env:
+          # DOCKER_ENV_VARS_CONTENT is used here to pass the secret content
+          DOCKER_ENV_VARS_CONTENT: ${{ secrets.DOCKER_ENV_VARS }}
+        run: |
+          # Define and export variables for the local shell environment
+          export PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
+          export DEPLOY_BRANCH="${{ github.ref_name }}"
+          export REPO_URL="https://github.com/${{ github.repository }}.git"
+          export DOCKER_COMPOSE_FILE="docker/docker-compose.fast.yaml"
+
+          # Base64 encode DOCKER_ENV_VARS_CONTENT to safely pass it
+          # This prevents any issues with special characters or newlines in the secret
+          # breaking the SSH here-document syntax.
+          export ENCODED_DOCKER_ENV_VARS=$(echo -n "$DOCKER_ENV_VARS_CONTENT" | base64 -w 0)
+          echo "Environment variables base64 encoded for safe transfer."
+
+          # CRITICAL CHANGE: Removed single quotes from 'EOF'
+          # By removing the single quotes from 'EOF', the shell running this
+          # 'run' block will perform variable expansion on all exported variables
+          # *before* sending the script content to the remote droplet via SSH.
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << EOF
+            echo "--- Starting deployment on Droplet ---"
+
+            # Use the variables directly as they are now expanded by the local shell
+            cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Error: Directory $PROJECT_ROOT_ON_DROPLET not found on droplet."; exit 1; }
+
+            if [ -d .git ]; then
+              echo "Git repo exists. Pulling changes for branch: $DEPLOY_BRANCH"
+              git pull origin "$DEPLOY_BRANCH"
+            else
+              echo "Cloning repository: $REPO_URL into current directory."
+              git clone "$REPO_URL" .
+              git checkout "$DEPLOY_BRANCH"
+            fi
+
+            echo "Writing .env to back/ folder by decoding base64 content..."
+            # Create the 'back' directory if it doesn't exist
+            mkdir -p back/
+            # Decode the base64 string and write it to the .env file
+            echo "$ENCODED_DOCKER_ENV_VARS" | base64 -d > back/.env
+
+            echo "Displaying .env content (first few lines): "
+            head -n 5 back/.env # Display only first 5 lines for security/verbosity
+
+            echo "Bringing up Docker Compose services using: $DOCKER_COMPOSE_FILE with --env-file"
+            # --- CRITICAL CHANGE: Added --env-file flag ---
+            # Docker Compose will now explicitly load environment variables from back/.env
+            docker compose -f "$DOCKER_COMPOSE_FILE" --env-file back/.env up -d --build
+
+            echo "Cleaning up unused images..."
+            docker image prune -f
+
+            echo "--- Deployment completed successfully ---"
+          EOF
