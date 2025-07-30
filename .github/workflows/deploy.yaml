@@ -30,14 +30,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
             echo "--- Starting deployment on Droplet ---"
 
-            PROJECT_ROOT_ON_DROPLET="/var/www/kivy_app"
-            BACK_DIR="\$PROJECT_ROOT_ON_DROPLET/back"
-            DOCKER_COMPOSE_FILE="\$PROJECT_ROOT_ON_DROPLET/docker/docker-compose.fast.yaml"
-
-            cd "/var/www/kivy_app" || exit 1
-            pwd 
-            ls -la 
-            ls -l .git
+            cd "\$PROJECT_ROOT_ON_DROPLET" || exit 1
 
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
