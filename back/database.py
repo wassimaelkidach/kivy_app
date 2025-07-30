@@ -2,31 +2,32 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 import os
+from dotenv import load_dotenv # Import load_dotenv
 
-# --- IMPORTANT: Get DB URL from Environment Variable ---
-# DigitalOcean App Platform will inject this variable.
-# It might be named DATABASE_URL, or DB_URL, or MYSQL_URL,
-# depending on how you configure your database connection on DO.
-# A common one for DO Managed Databases is DATABASE_URL
-MYSQL_USER = os.getenv("MYSQL_USER") # Or os.getenv("MYSQL_URL") or similar
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD") # Or os.getenv("MYSQL_URL") or similar
-MYSQL_DATABASE = os.getenv("MYSQL_DATABASE") # Or os.getenv("MYSQL_URL") or similar
+# --- IMPORTANT: Load environment variables from .env file ---
+# This line tells python-dotenv to load variables from the .env file
+# located in the same directory as this script (back/.env inside the container).
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
+# --- Get DB URL components from Environment Variables ---
+# These variables are now loaded from back/.env thanks to load_dotenv().
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
+
+# Construct the DATABASE_URL
 DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@db:3306/{MYSQL_DATABASE}?charset=utf8mb4"
 
 # --- DEBUG PRINTS ---
 print(f"DEBUG: Constructed DATABASE_URL={DATABASE_URL}")
 # --- END DEBUG PRINTS ---
 
-if DATABASE_URL is None:
-    print("ERROR: DATABASE_URL environment variable is not set!")
+if MYSQL_USER is None or MYSQL_PASSWORD is None or MYSQL_DATABASE is None:
+    print("ERROR: One or more MySQL environment variables (MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE) are not set!")
     # For production, you might want to raise an exception to prevent startup:
-    # raise ValueError("DATABASE_URL environment variable is not set!")
-    # Keeping it as a print for now to see the error.
+    raise ValueError("Missing MySQL environment variables. Check .env file.")
 
 # --- Create the SQLAlchemy engine ---
-# For DigitalOcean Managed MySQL, you generally don't need explicit SSL connect_args.
-# The platform handles the secure connection.
 engine = create_engine(DATABASE_URL, echo=True) # echo=True for debugging, set to False for production
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
