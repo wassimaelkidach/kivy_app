@@ -29,10 +29,10 @@ jobs:
 
           export DOCKER_COMPOSE_FILE="docker/docker-compose.fast.yaml"
         
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << 'EOF'
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} -T << EOF
             echo "--- Starting deployment on Droplet ---"
 
-            cd /var/www/kivy_app || exit 1
+            cd "$PROJECT_ROOT_ON_DROPLET" || { echo "Error: Directory $PROJECT_ROOT_ON_DROPLET not found on droplet."; exit 1; }
 
             if [ -d .git ]; then
               echo "Git repo exists. Pulling changes..."
