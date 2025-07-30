@@ -11,14 +11,13 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # --- Get DB URL components from Environment Variables ---
 # These variables are now loaded from back/.env thanks to load_dotenv().
-MYSQL_USER = os.getenv("MYSQL_USER")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+MYSQL_PASSWORD = os.getenv("MYSQL_ROOT_PASSWORD")
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
 
 # Construct the DATABASE_URL
-DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@db:3306/{MYSQL_DATABASE}?charset=utf8mb4"
+DATABASE_URL = f"mysql+pymysql://root:{MYSQL_PASSWORD}@db:3306/{MYSQL_DATABASE}?charset=utf8mb4"
 
-# --- DEBUG PRINTS ---docker logs docker-web-1
+# --- DEBUG PRINTS ---
 print(f"DEBUG: Constructed DATABASE_URL={DATABASE_URL}")
 # --- END DEBUG PRINTS ---
 
