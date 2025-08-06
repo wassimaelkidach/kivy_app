@@ -159,6 +159,7 @@ def get_project_details(project_id: int, db: Session = Depends(get_db)):
         code_projet=project.code_projet,
         dispos=[
             DispoOut(
+                code_projet=d.code_projet,
                 type_lg=d.type_lg,
                 superfide_min=d.superfide_min,
                 superfide_max=d.superfide_max,
